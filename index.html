@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Traceroute Simulation</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Interactive Traceroute Simulation</h1>
+            <p class="header__subtitle">Learn how traceroute works and understand common network errors</p>
+        </header>
+
+        <div class="main-layout">
+            <!-- Left Panel: Controls and Info -->
+            <div class="left-panel">
+                <!-- Simulation Controls -->
+                <div class="card control-panel">
+                    <div class="card__header">
+                        <h3>Simulation Controls</h3>
+                    </div>
+                    <div class="card__body">
+                        <div class="form-group">
+                            <label class="form-label" for="destination">Destination:</label>
+                            <input type="text" id="destination" class="form-control" value="google.com (8.8.8.8)">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="max-hops">Max Hops: <span id="max-hops-value">30</span></label>
+                            <input type="range" id="max-hops" class="range-slider" min="1" max="30" value="30">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="timeout">Timeout: <span id="timeout-value">5</span>s</label>
+                            <input type="range" id="timeout" class="range-slider" min="1" max="10" value="5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <h4>Error Scenarios:</h4>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="too-many-hops"> Simulate too many hops error
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="timeout-at-hop"> Simulate timeout at hop:
+                                <input type="number" id="timeout-hop-number" min="1" max="30" value="5" disabled>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="network-unreachable"> Simulate network unreachable
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="host-unreachable"> Simulate host unreachable
+                            </label>
+                        </div>
+                        
+                        <div class="control-buttons">
+                            <button id="start-btn" class="btn btn--primary">Start Traceroute</button>
+                            <button id="pause-btn" class="btn btn--secondary" disabled>Pause</button>
+                            <button id="reset-btn" class="btn btn--outline">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Educational Panel -->
+                <div class="card educational-panel">
+                    <div class="card__header">
+                        <h3>How Traceroute Works</h3>
+                    </div>
+                    <div class="card__body">
+                        <div class="ttl-explanation">
+                            <img src="https://pplx-res.cloudinary.com/image/upload/v1754807995/pplx_project_search_images/c46e542da901730e46425dac3a1bde89e7d2320c.png" alt="TTL illustration" class="explanation-image">
+                            <p>Traceroute uses TTL (Time-To-Live) values to discover network paths:</p>
+                            <ol class="process-steps">
+                                <li>Send packet with TTL=1</li>
+                                <li>First router decrements TTL to 0 and discards packet</li>
+                                <li>Router sends ICMP Time Exceeded message back</li>
+                                <li>Traceroute records the router's IP and response time</li>
+                                <li>Repeat with TTL=2, TTL=3, etc.</li>
+                                <li>Continue until destination reached or max hops exceeded</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="error-codes">
+                            <h4>Common Error Messages:</h4>
+                            <div class="error-item">
+                                <span class="error-code">* * *</span> - Request timed out
+                            </div>
+                            <div class="error-item">
+                                <span class="error-code">!H</span> - Host unreachable
+                            </div>
+                            <div class="error-item">
+                                <span class="error-code">!N</span> - Network unreachable
+                            </div>
+                            <div class="error-item">
+                                <span class="error-code">!P</span> - Protocol unreachable
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Network Diagram and Output -->
+            <div class="right-panel">
+                <!-- Network Topology Diagram -->
+                <div class="card network-diagram">
+                    <div class="card__header">
+                        <h3>Network Topology</h3>
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div class="packet probe-packet"></div>
+                                <span>UDP Probe</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="packet icmp-packet"></div>
+                                <span>ICMP Response</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card__body">
+                        <div class="network-container">
+                            <div class="network-path">
+                                <!-- Source Computer -->
+                                <div class="network-node source-node" id="source">
+                                    <div class="node-icon">💻</div>
+                                    <div class="node-label">
+                                        <div class="node-name">Your Computer</div>
+                                        <div class="node-ip">192.168.1.100</div>
+                                    </div>
+                                </div>
+
+                                <!-- Router Hops -->
+                                <div class="hop-node" id="hop-1">
+                                    <div class="node-icon">🔗</div>
+                                    <div class="node-label">
+                                        <div class="node-name">Gateway Router</div>
+                                        <div class="node-ip">192.168.1.1</div>
+                                    </div>
+                                </div>
+
+                                <div class="hop-node" id="hop-2">
+                                    <div class="node-icon">🔗</div>
+                                    <div class="node-label">
+                                        <div class="node-name">ISP Router 1</div>
+                                        <div class="node-ip">10.0.1.1</div>
+                                    </div>
+                                </div>
+
+                                <div class="hop-node" id="hop-3">
+                                    <div class="node-icon">🔗</div>
+                                    <div class="node-label">
+                                        <div class="node-name">ISP Router 2</div>
+                                        <div class="node-ip">10.0.2.1</div>
+                                    </div>
+                                </div>
+
+                                <div class="hop-node" id="hop-4">
+                                    <div class="node-icon">🔗</div>
+                                    <div class="node-label">
+                                        <div class="node-name">Backbone Router 1</div>
+                                        <div class="node-ip">203.0.113.1</div>
+                                    </div>
+                                </div>
+
+                                <div class="hop-node" id="hop-5">
+                                    <div class="node-icon">🔗</div>
+                                    <div class="node-label">
+                                        <div class="node-name">Backbone Router 2</div>
+                                        <div class="node-ip">203.0.113.2</div>
+                                    </div>
+                                </div>
+
+                                <div class="hop-node" id="hop-6">
+                                    <div class="node-icon">🔗</div>
+                                    <div class="node-label">
+                                        <div class="node-name">Regional Router</div>
+                                        <div class="node-ip">198.51.100.1</div>
+                                    </div>
+                                </div>
+
+                                <div class="hop-node" id="hop-7">
+                                    <div class="node-icon">🔗</div>
+                                    <div class="node-label">
+                                        <div class="node-name">Edge Router</div>
+                                        <div class="node-ip">198.51.100.2</div>
+                                    </div>
+                                </div>
+
+                                <!-- Destination Server -->
+                                <div class="network-node destination-node" id="destination-node">
+                                    <div class="node-icon">🖥️</div>
+                                    <div class="node-label">
+                                        <div class="node-name">Google DNS</div>
+                                        <div class="node-ip">8.8.8.8</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Animated packets will be injected here -->
+                            <div id="packets-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Traceroute Output -->
+                <div class="card output-panel">
+                    <div class="card__header">
+                        <h3>Traceroute Output</h3>
+                        <div class="status-indicator" id="status-indicator">
+                            <span class="status status--info">Ready</span>
+                        </div>
+                    </div>
+                    <div class="card__body">
+                        <div class="terminal-output" id="terminal-output">
+                            <div class="terminal-line">traceroute to google.com (8.8.8.8), 30 hops max, 60 byte packets</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
